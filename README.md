@@ -1,150 +1,75 @@
-# 🎯 Smart Hire AI - Sistema de Reclutamiento Inteligente
+# Smart Hire AI - Intelligent Recruitment System
 
-Sistema de reclutamiento con inteligencia artificial que conecta empresas con candidatos ideales.
+## Project Overview
+Smart Hire AI is an advanced recruitment platform designed to streamline the hiring process for SMEs using Artificial Intelligence. The system connects companies with ideal candidates through automated CV analysis, adaptive conversational interviews, and data-driven compatibility scoring.
 
-## 🚀 Inicio Rápido
+## Technology Stack
+- **Frontend**: React 18, Vite, TypeScript
+- **Styling**: Tailwind CSS, Shadcn/UI
+- **State Management**: React Query
+- **Routing**: React Router DOM
+- **Backend Integration**: Axios
 
-### Configuración del Backend
+## Prerequisites
+- Node.js (v18 or higher)
+- npm or yarn
 
-1. **Configurar URL del Backend**
+## Installation & Setup
+
+1. **Clone the repository**
    ```bash
-   # El archivo .env ya está creado con:
-   VITE_API_URL=http://localhost:8000
+   git clone <repository-url>
+   cd smart-hire-ai
    ```
 
-2. **Instalar dependencias**
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-3. **Iniciar el frontend**
+3. **Environment Configuration**
+   The application requires a backend connection. Ensure the `.env` file is configured correctly:
+   ```env
+   VITE_API_URL=http://localhost:8000
+   ```
+
+4. **Start the Development Server**
    ```bash
    npm run dev
    ```
+   The application will be available at `http://localhost:5173`.
 
-El frontend estará disponible en: **http://localhost:5173**
+## Key Features
 
-### 📚 Documentación de Integración
+### Candidate Portal
+- **Vacancy Discovery**: Advanced filtering by city, role, and modality.
+- **Smart Application**: Streamlined process with PDF CV upload.
+- **AI Interview**: Interactive chatbot that conducts preliminary technical interviews based on the role.
+- **Real-time Feedback**: Immediate status updates on applications.
 
-- **[INICIO_RAPIDO.md](INICIO_RAPIDO.md)** - Guía rápida de 3 pasos
-- **[CONFIGURACION_BACKEND.md](CONFIGURACION_BACKEND.md)** - Guía completa de configuración
-- **[EJEMPLOS_USO.md](EJEMPLOS_USO.md)** - Ejemplos de código
-- **[RESUMEN_INTEGRACION.md](RESUMEN_INTEGRACION.md)** - Resumen de integración
-- **[CHECKLIST_INTEGRACION.md](CHECKLIST_INTEGRACION.md)** - Checklist de verificación
+### Company Portal
+- **Vacancy Management**: Create and manage job postings with AI assistance.
+- **Automated Screening**: AI-generated interview questions tailored to specific job requirements.
+- **Dashboard**: Analytics on received applications and candidate compatibility scores.
 
-## ✨ Características
-
-### Para Empresas
-- ✅ Registro de empresa
-- ✅ Creación de vacantes
-- ✅ Generación automática de preguntas con IA
-- ✅ Revisión y aprobación de preguntas
-- ✅ Publicación de vacantes
-- ✅ Ver aplicaciones recibidas
-
-### Para Candidatos
-- ✅ Búsqueda de vacantes con filtros
-- ✅ Ver detalles de vacantes
-- ✅ Aplicación con CV (PDF)
-- ✅ Chatbot interactivo para entrevista
-- ✅ Evaluación automática con IA
-- ✅ Puntuación y compatibilidad
-
-## 🔌 Endpoints Conectados
-
-### Empresa
-- `POST /api/empresa/registrar`
-- `POST /api/empresa/crear-vacante`
-- `POST /api/empresa/aprobar-preguntas`
-- `GET /api/empresa/{empresaId}/aplicaciones`
-
-### Vacantes
-- `GET /api/vacantes/publicadas`
-- `GET /api/vacantes/{vacanteId}/detalles`
-
-### Candidato
-- `POST /api/candidato/aplicar`
-- `POST /api/candidato/responder`
-- `POST /api/candidato/chatbot/iniciar`
-- `POST /api/candidato/chatbot/siguiente`
-- `POST /api/candidato/chatbot/finalizar`
-
-## 🎯 Rutas Disponibles
-
-| Ruta | Descripción |
-|------|-------------|
-| `/` | Página de inicio |
-| `/company` | Portal de empresas |
-| `/candidate` | Portal de candidatos |
-
-## Project info
-
-**URL**: https://lovable.dev/projects/bae92cf7-2383-447f-85ca-07c6f10f44d1
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/bae92cf7-2383-447f-85ca-07c6f10f44d1) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+## Project Structure
+```
+src/
+├── components/     # Reusable UI components
+├── config/         # App configuration (API, constants)
+├── hooks/          # Custom React hooks
+├── pages/          # Main application views
+├── services/       # API integration services
+└── lib/            # Utility functions
 ```
 
-**Edit a file directly in GitHub**
+## API Integration
+The frontend communicates with a FastAPI backend via the following key endpoints:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- **Authentication**: `/api/auth/*`
+- **Companies**: `/api/empresa/*`
+- **Candidates**: `/api/candidato/*`
+- **Vacancies**: `/api/vacantes/*`
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/bae92cf7-2383-447f-85ca-07c6f10f44d1) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## License
+All rights reserved. Smart Hire AI 2024.
