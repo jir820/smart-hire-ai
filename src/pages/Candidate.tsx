@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import ChatbotInterface from "@/components/ChatbotInterface";
+import { vacantesService, Vacante } from "@/services/vacantesService";
+import { ApiError } from "@/config/api";
+import { useToast } from "@/hooks/use-toast";
 import {
   MapPin,
   Briefcase,
@@ -12,76 +17,66 @@ import {
   Calendar,
   MessageSquare,
   Building2,
+  Loader2,
+  Search,
 } from "lucide-react";
 
-interface Job {
-  id: string;
-  title: string;
-  company: string;
-  location: string;
-  type: string;
-  salary: string;
-  description: string;
-  requirements: string[];
-  posted: string;
-}
-
-const mockJobs: Job[] = [
-  {
-    id: "1",
-    title: "Desarrollador Full Stack",
-    company: "TechStart Solutions",
-    location: "Remoto",
-    type: "Tiempo Completo",
-    salary: "$2,500 - $3,500 USD",
-    description:
-      "Buscamos un desarrollador full stack con experiencia en React y Node.js para unirse a nuestro equipo en crecimiento.",
-    requirements: [
-      "3+ años de experiencia en desarrollo web",
-      "Dominio de React, Node.js y TypeScript",
-      "Experiencia con bases de datos SQL y NoSQL",
-      "Conocimientos de Git y metodologías ágiles",
-    ],
-    posted: "Hace 2 días",
-  },
-  {
-    id: "2",
-    title: "Diseñador UX/UI",
-    company: "Creative Agency",
-    location: "Bogotá, Colombia",
-    type: "Híbrido",
-    salary: "$1,800 - $2,500 USD",
-    description:
-      "Empresa de diseño busca diseñador UX/UI apasionado por crear experiencias digitales excepcionales.",
-    requirements: [
-      "2+ años de experiencia en diseño UX/UI",
-      "Portafolio demostrando proyectos web y móviles",
-      "Dominio de Figma, Adobe XD o Sketch",
-      "Conocimientos de Design Systems",
-    ],
-    posted: "Hace 1 semana",
-  },
-  {
-    id: "3",
-    title: "Analista de Datos",
-    company: "DataDriven Corp",
-    location: "Ciudad de México",
-    type: "Tiempo Completo",
-    salary: "$2,000 - $3,000 USD",
-    description:
-      "Únete a nuestro equipo de analytics y ayuda a las empresas a tomar decisiones basadas en datos.",
-    requirements: [
-      "Experiencia con Python y SQL",
-      "Conocimientos de visualización de datos (Tableau, Power BI)",
-      "Análisis estadístico y machine learning básico",
-      "Capacidad de comunicar insights complejos",
-    ],
-    posted: "Hace 3 días",
-  },
-];
-
 const Candidate = () => {
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [jobs, setJobs] = useState<Vacante[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [filtros, setFiltros] = useState({
+    ciudad: "",
+    cargo: "",
+    modalidad: "",
+  });
+  const { toast } = useToast();
+
+  // Cargar vacantes al montar el componente
+  useEffect(() => {
+    cargarVacantes();
+  }, []);
+
+  const cargarVacantes = async () => {
+    setLoading(true);
+    try {
+      const response = await vacantesService.listarPublicadas({
+        ...filtros,
+        limit: 50,
+      });
+      setJobs(response.vacantes);
+    } catch (error) {
+      const apiError = error as ApiError;
+      toast({
+        title: "Error",
+        description: apiError.message || "No se pudieron cargar las vacantes",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBuscar = () => {
+    cargarVacantes();
+  };
+
+  const formatSalary = (min: number, max: number) => {
+    return `$${min.toLocaleString()} - $${max.toLocaleString()}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Hoy";
+    if (diffDays === 1) return "Hace 1 día";
+    if (diffDays < 7) return `Hace ${diffDays} días`;
+    if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semanas`;
+    return `Hace ${Math.floor(diffDays / 30)} meses`;
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -97,105 +92,128 @@ const Candidate = () => {
             </p>
           </div>
 
-          {!selectedJob ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-              {mockJobs.map((job) => (
-                <Card
-                  key={job.id}
-                  className="p-6 space-y-6 hover:shadow-custom-lg transition-base cursor-pointer"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2 flex-1">
-                        <h3 className="text-foreground font-semibold">{job.title}</h3>
-                        <div className="flex items-center space-x-2 text-muted-foreground">
-                          <Building2 className="h-4 w-4" />
-                          <span className="text-sm">{job.company}</span>
+          {/* Filtros de búsqueda */}
+          {!selectedJobId && (
+            <Card className="p-6 mb-8 max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="ciudad">Ciudad</Label>
+                  <Input
+                    id="ciudad"
+                    placeholder="Ej: Bogotá"
+                    value={filtros.ciudad}
+                    onChange={(e) => setFiltros({ ...filtros, ciudad: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cargo">Cargo</Label>
+                  <Input
+                    id="cargo"
+                    placeholder="Ej: Desarrollador"
+                    value={filtros.cargo}
+                    onChange={(e) => setFiltros({ ...filtros, cargo: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="modalidad">Modalidad</Label>
+                  <Input
+                    id="modalidad"
+                    placeholder="Ej: Remoto"
+                    value={filtros.modalidad}
+                    onChange={(e) => setFiltros({ ...filtros, modalidad: e.target.value })}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button onClick={handleBuscar} className="w-full gradient-primary" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Buscando...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="mr-2 h-4 w-4" />
+                        Buscar
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {!selectedJobId ? (
+            loading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : jobs.length === 0 ? (
+              <Card className="p-12 text-center max-w-2xl mx-auto">
+                <p className="text-muted-foreground">No se encontraron vacantes. Intenta con otros filtros.</p>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+                {jobs.map((job) => (
+                  <Card
+                    key={job.id}
+                    className="p-6 space-y-6 hover:shadow-glow-primary transition-base cursor-pointer border-primary/10 hover:border-primary/30"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2 flex-1">
+                          <h3 className="text-foreground font-semibold">{job.titulo}</h3>
+                          <div className="flex items-center space-x-2 text-muted-foreground">
+                            <Building2 className="h-4 w-4" />
+                            <span className="text-sm">{job.empresa_nombre}</span>
+                          </div>
+                        </div>
+                        <Badge variant="secondary">{job.modalidad}</Badge>
+                      </div>
+
+                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center space-x-1">
+                          <MapPin className="h-4 w-4" />
+                          <span>{job.ciudad}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <DollarSign className="h-4 w-4" />
+                          <span>{formatSalary(job.salario_min, job.salario_max)}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Calendar className="h-4 w-4" />
+                          <span>{formatDate(job.fecha_publicacion)}</span>
                         </div>
                       </div>
-                      <Badge variant="secondary">{job.type}</Badge>
                     </div>
 
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center space-x-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>{job.location}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <DollarSign className="h-4 w-4" />
-                        <span>{job.salary}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>{job.posted}</span>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-foreground">Habilidades requeridas:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {job.habilidades_requeridas.slice(0, 5).map((skill, idx) => (
+                          <Badge key={idx} variant="outline" className="text-xs">
+                            {skill}
+                          </Badge>
+                        ))}
                       </div>
                     </div>
-                  </div>
 
-                  <p className="text-sm text-muted-foreground">{job.description}</p>
-
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-foreground">Requisitos:</p>
-                    <ul className="space-y-1">
-                      {job.requirements.slice(0, 3).map((req, idx) => (
-                        <li key={idx} className="text-sm text-muted-foreground flex items-start">
-                          <span className="text-secondary mr-2">✓</span>
-                          {req}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <Button onClick={() => setSelectedJob(job)} className="w-full gradient-primary">
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Postular con Chatbot
-                  </Button>
-                </Card>
-              ))}
-            </div>
+                    <Button onClick={() => setSelectedJobId(job.id)} className="w-full gradient-primary">
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      Ver Detalles y Postular
+                    </Button>
+                  </Card>
+                ))}
+              </div>
+            )
           ) : (
             <div className="max-w-4xl mx-auto space-y-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-semibold text-foreground">{selectedJob.title}</h2>
-                  <p className="text-muted-foreground">
-                    {selectedJob.company} • {selectedJob.location}
-                  </p>
-                </div>
-                <Button variant="outline" onClick={() => setSelectedJob(null)}>
-                  Ver otras vacantes
+                <Button variant="outline" onClick={() => setSelectedJobId(null)}>
+                  ← Ver otras vacantes
                 </Button>
               </div>
 
-              <ChatbotInterface jobTitle={selectedJob.title} />
-
-              <Card className="p-6 space-y-4 bg-muted/30">
-                <h3 className="font-semibold text-foreground">Sobre la vacante</h3>
-                <p className="text-sm text-muted-foreground">{selectedJob.description}</p>
-                
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-foreground">Requisitos completos:</p>
-                  <ul className="space-y-1">
-                    {selectedJob.requirements.map((req, idx) => (
-                      <li key={idx} className="text-sm text-muted-foreground flex items-start">
-                        <span className="text-secondary mr-2">✓</span>
-                        {req}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Tipo de contrato</p>
-                    <p className="text-sm font-medium text-foreground">{selectedJob.type}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Rango salarial</p>
-                    <p className="text-sm font-medium text-foreground">{selectedJob.salary}</p>
-                  </div>
-                </div>
-              </Card>
+              <ChatbotInterface vacanteId={selectedJobId} />
             </div>
           )}
         </div>

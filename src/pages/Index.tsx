@@ -42,7 +42,7 @@ const Index = () => {
                 mejora la calidad de las contrataciones.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" asChild className="gradient-primary shadow-custom-md hover:shadow-custom-lg transition-base text-lg">
+                <Button size="lg" asChild className="gradient-primary shadow-glow-primary hover:shadow-lg transition-base text-lg">
                   <Link to="/candidate">
                     <Users className="mr-2 h-5 w-5" />
                     Soy Candidato

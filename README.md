@@ -1,4 +1,81 @@
-# Welcome to your Lovable project
+# 🎯 Smart Hire AI - Sistema de Reclutamiento Inteligente
+
+Sistema de reclutamiento con inteligencia artificial que conecta empresas con candidatos ideales.
+
+## 🚀 Inicio Rápido
+
+### Configuración del Backend
+
+1. **Configurar URL del Backend**
+   ```bash
+   # El archivo .env ya está creado con:
+   VITE_API_URL=http://localhost:8000
+   ```
+
+2. **Instalar dependencias**
+   ```bash
+   npm install
+   ```
+
+3. **Iniciar el frontend**
+   ```bash
+   npm run dev
+   ```
+
+El frontend estará disponible en: **http://localhost:5173**
+
+### 📚 Documentación de Integración
+
+- **[INICIO_RAPIDO.md](INICIO_RAPIDO.md)** - Guía rápida de 3 pasos
+- **[CONFIGURACION_BACKEND.md](CONFIGURACION_BACKEND.md)** - Guía completa de configuración
+- **[EJEMPLOS_USO.md](EJEMPLOS_USO.md)** - Ejemplos de código
+- **[RESUMEN_INTEGRACION.md](RESUMEN_INTEGRACION.md)** - Resumen de integración
+- **[CHECKLIST_INTEGRACION.md](CHECKLIST_INTEGRACION.md)** - Checklist de verificación
+
+## ✨ Características
+
+### Para Empresas
+- ✅ Registro de empresa
+- ✅ Creación de vacantes
+- ✅ Generación automática de preguntas con IA
+- ✅ Revisión y aprobación de preguntas
+- ✅ Publicación de vacantes
+- ✅ Ver aplicaciones recibidas
+
+### Para Candidatos
+- ✅ Búsqueda de vacantes con filtros
+- ✅ Ver detalles de vacantes
+- ✅ Aplicación con CV (PDF)
+- ✅ Chatbot interactivo para entrevista
+- ✅ Evaluación automática con IA
+- ✅ Puntuación y compatibilidad
+
+## 🔌 Endpoints Conectados
+
+### Empresa
+- `POST /api/empresa/registrar`
+- `POST /api/empresa/crear-vacante`
+- `POST /api/empresa/aprobar-preguntas`
+- `GET /api/empresa/{empresaId}/aplicaciones`
+
+### Vacantes
+- `GET /api/vacantes/publicadas`
+- `GET /api/vacantes/{vacanteId}/detalles`
+
+### Candidato
+- `POST /api/candidato/aplicar`
+- `POST /api/candidato/responder`
+- `POST /api/candidato/chatbot/iniciar`
+- `POST /api/candidato/chatbot/siguiente`
+- `POST /api/candidato/chatbot/finalizar`
+
+## 🎯 Rutas Disponibles
+
+| Ruta | Descripción |
+|------|-------------|
+| `/` | Página de inicio |
+| `/company` | Portal de empresas |
+| `/candidate` | Portal de candidatos |
 
 ## Project info
 

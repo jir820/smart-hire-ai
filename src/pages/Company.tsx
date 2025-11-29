@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { empresaService, PreguntaSugerida } from "@/services/empresaService";
+import { ApiError } from "@/config/api";
 import {
   Building2,
   Users,
@@ -15,62 +17,148 @@ import {
   Brain,
   FileText,
   Target,
+  Loader2,
 } from "lucide-react";
 
 const Company = () => {
   const [step, setStep] = useState<"info" | "job" | "questions" | "success">("info");
+  const [loading, setLoading] = useState(false);
+  const [empresaId, setEmpresaId] = useState<string>("");
+  const [vacanteId, setVacanteId] = useState<string>("");
   const [companyInfo, setCompanyInfo] = useState({
     name: "",
+    nit: "",
     industry: "",
     size: "",
     description: "",
+    city: "",
+    email: "",
   });
   const [jobInfo, setJobInfo] = useState({
     title: "",
     description: "",
     requirements: "",
-    salary: "",
+    salary_min: "",
+    salary_max: "",
     location: "",
     type: "",
+    modalidad: "",
+    cargo: "",
+    experiencia_min: "",
+    experiencia_max: "",
   });
-  const [aiQuestions, setAiQuestions] = useState<string[]>([]);
+  const [aiQuestions, setAiQuestions] = useState<PreguntaSugerida[]>([]);
   const { toast } = useToast();
 
-  const handleCompanySubmit = (e: React.FormEvent) => {
+  const handleCompanySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Información registrada",
-      description: "La IA ha clasificado tu empresa exitosamente.",
-    });
-    setStep("job");
+    setLoading(true);
+    
+    try {
+      const response = await empresaService.registrar({
+        nombre_empresa: companyInfo.name,
+        nit: companyInfo.nit,
+        industria: companyInfo.industry,
+        tamaño_empresa: companyInfo.size,
+        descripcion: companyInfo.description,
+        ciudad: companyInfo.city,
+        email: companyInfo.email,
+      });
+      
+      setEmpresaId(response.empresa_id);
+      toast({
+        title: "Información registrada",
+        description: response.mensaje,
+      });
+      setStep("job");
+    } catch (error) {
+      const apiError = error as ApiError;
+      toast({
+        title: "Error",
+        description: apiError.message || "No se pudo registrar la empresa",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleJobSubmit = (e: React.FormEvent) => {
+  const handleJobSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     
-    // Simular generación de preguntas por IA
-    const generatedQuestions = [
-      "¿Cuál es tu experiencia previa en proyectos similares a los que desarrollaremos?",
-      "Describe tu proceso para resolver problemas técnicos complejos.",
-      "¿Cómo te mantienes actualizado con las últimas tecnologías en tu campo?",
-      "Cuéntame sobre un proyecto del que te sientas especialmente orgulloso.",
-      "¿Cómo describes tu estilo de trabajo en equipo?",
-    ];
-    
-    setAiQuestions(generatedQuestions);
-    toast({
-      title: "Preguntas generadas",
-      description: "La IA ha creado preguntas personalizadas para evaluar candidatos.",
-    });
-    setStep("questions");
+    try {
+      // Parsear habilidades desde el campo requirements
+      const habilidades = jobInfo.requirements
+        .split('\n')
+        .map(req => req.trim())
+        .filter(req => req.length > 0);
+
+      const response = await empresaService.crearVacante({
+        empresa_id: empresaId,
+        titulo: jobInfo.title,
+        descripcion: jobInfo.description,
+        cargo: jobInfo.cargo || jobInfo.title,
+        tipo_contrato: jobInfo.type,
+        modalidad: jobInfo.modalidad,
+        habilidades_requeridas: habilidades,
+        experiencia_min: parseInt(jobInfo.experiencia_min) || 0,
+        experiencia_max: parseInt(jobInfo.experiencia_max) || 10,
+        salario_min: parseFloat(jobInfo.salary_min) || 0,
+        salario_max: parseFloat(jobInfo.salary_max) || 0,
+        ciudad: jobInfo.location,
+      });
+      
+      setVacanteId(response.vacante_id);
+      setAiQuestions(response.preguntas_sugeridas);
+      
+      toast({
+        title: "Preguntas generadas",
+        description: "La IA ha creado preguntas personalizadas para evaluar candidatos.",
+      });
+      setStep("questions");
+    } catch (error) {
+      const apiError = error as ApiError;
+      toast({
+        title: "Error",
+        description: apiError.message || "No se pudo crear la vacante",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handlePublish = () => {
-    toast({
-      title: "¡Convocatoria publicada!",
-      description: "Tu vacante está ahora disponible para candidatos.",
-    });
-    setStep("success");
+  const handlePublish = async () => {
+    setLoading(true);
+    
+    try {
+      // Aprobar todas las preguntas por defecto
+      const preguntasAprobadas = aiQuestions.map(q => ({
+        pregunta_id: q.pregunta_id || "",
+        aprobada: true,
+      }));
+
+      const response = await empresaService.aprobarPreguntas({
+        vacante_id: vacanteId,
+        preguntas_aprobadas: preguntasAprobadas,
+      });
+      
+      toast({
+        title: "¡Convocatoria publicada!",
+        description: response.mensaje,
+      });
+      setStep("success");
+    } catch (error) {
+      const apiError = error as ApiError;
+      toast({
+        title: "Error",
+        description: apiError.message || "No se pudo publicar la vacante",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -167,6 +255,31 @@ const Company = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
+                      <Label htmlFor="nit">NIT</Label>
+                      <Input
+                        id="nit"
+                        placeholder="Ej: 900123456"
+                        value={companyInfo.nit}
+                        onChange={(e) => setCompanyInfo({ ...companyInfo, nit: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="contacto@empresa.com"
+                        value={companyInfo.email}
+                        onChange={(e) => setCompanyInfo({ ...companyInfo, email: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
                       <Label htmlFor="industry">Industria</Label>
                       <Input
                         id="industry"
@@ -181,12 +294,23 @@ const Company = () => {
                       <Label htmlFor="size">Tamaño de la empresa</Label>
                       <Input
                         id="size"
-                        placeholder="Ej: 10-50 empleados"
+                        placeholder="Ej: 11-50"
                         value={companyInfo.size}
                         onChange={(e) => setCompanyInfo({ ...companyInfo, size: e.target.value })}
                         required
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="city">Ciudad</Label>
+                    <Input
+                      id="city"
+                      placeholder="Ej: Bogotá"
+                      value={companyInfo.city}
+                      onChange={(e) => setCompanyInfo({ ...companyInfo, city: e.target.value })}
+                      required
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -203,9 +327,18 @@ const Company = () => {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full gradient-primary">
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Continuar con IA
+                  <Button type="submit" className="w-full gradient-primary" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Procesando...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Continuar con IA
+                      </>
+                    )}
                   </Button>
                 </form>
               </Card>
@@ -260,23 +393,64 @@ const Company = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="salary">Salario</Label>
+                      <Label htmlFor="salary_min">Salario Mínimo</Label>
                       <Input
-                        id="salary"
-                        placeholder="Ej: $2,000 - $3,000"
-                        value={jobInfo.salary}
-                        onChange={(e) => setJobInfo({ ...jobInfo, salary: e.target.value })}
+                        id="salary_min"
+                        type="number"
+                        placeholder="Ej: 3000000"
+                        value={jobInfo.salary_min}
+                        onChange={(e) => setJobInfo({ ...jobInfo, salary_min: e.target.value })}
                         required
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="location">Ubicación</Label>
+                      <Label htmlFor="salary_max">Salario Máximo</Label>
+                      <Input
+                        id="salary_max"
+                        type="number"
+                        placeholder="Ej: 5000000"
+                        value={jobInfo.salary_max}
+                        onChange={(e) => setJobInfo({ ...jobInfo, salary_max: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="experiencia_min">Experiencia Mínima (años)</Label>
+                      <Input
+                        id="experiencia_min"
+                        type="number"
+                        placeholder="Ej: 2"
+                        value={jobInfo.experiencia_min}
+                        onChange={(e) => setJobInfo({ ...jobInfo, experiencia_min: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="experiencia_max">Experiencia Máxima (años)</Label>
+                      <Input
+                        id="experiencia_max"
+                        type="number"
+                        placeholder="Ej: 5"
+                        value={jobInfo.experiencia_max}
+                        onChange={(e) => setJobInfo({ ...jobInfo, experiencia_max: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="location">Ciudad</Label>
                       <Input
                         id="location"
-                        placeholder="Ej: Remoto, Bogotá"
+                        placeholder="Ej: Bogotá"
                         value={jobInfo.location}
                         onChange={(e) => setJobInfo({ ...jobInfo, location: e.target.value })}
                         required
@@ -284,12 +458,23 @@ const Company = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="type">Tipo</Label>
+                      <Label htmlFor="type">Tipo de Contrato</Label>
                       <Input
                         id="type"
                         placeholder="Ej: Tiempo completo"
                         value={jobInfo.type}
                         onChange={(e) => setJobInfo({ ...jobInfo, type: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="modalidad">Modalidad</Label>
+                      <Input
+                        id="modalidad"
+                        placeholder="Ej: Remoto, Híbrido"
+                        value={jobInfo.modalidad}
+                        onChange={(e) => setJobInfo({ ...jobInfo, modalidad: e.target.value })}
                         required
                       />
                     </div>
@@ -299,9 +484,18 @@ const Company = () => {
                     <Button type="button" variant="outline" onClick={() => setStep("info")}>
                       Atrás
                     </Button>
-                    <Button type="submit" className="flex-1 gradient-primary">
-                      <Brain className="mr-2 h-4 w-4" />
-                      Generar Preguntas con IA
+                    <Button type="submit" className="flex-1 gradient-primary" disabled={loading}>
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generando...
+                        </>
+                      ) : (
+                        <>
+                          <Brain className="mr-2 h-4 w-4" />
+                          Generar Preguntas con IA
+                        </>
+                      )}
                     </Button>
                   </div>
                 </form>
@@ -331,9 +525,9 @@ const Company = () => {
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium text-foreground mb-1">
-                            Pregunta {index + 1}
+                            Pregunta {index + 1} - {question.tipo_pregunta}
                           </p>
-                          <p className="text-sm text-muted-foreground">{question}</p>
+                          <p className="text-sm text-muted-foreground">{question.pregunta}</p>
                         </div>
                       </div>
                     </Card>
@@ -358,9 +552,18 @@ const Company = () => {
                   <Button type="button" variant="outline" onClick={() => setStep("job")}>
                     Atrás
                   </Button>
-                  <Button onClick={handlePublish} className="flex-1 gradient-secondary">
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Publicar Convocatoria
+                  <Button onClick={handlePublish} className="flex-1 gradient-secondary" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Publicando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Publicar Convocatoria
+                      </>
+                    )}
                   </Button>
                 </div>
               </Card>
@@ -405,9 +608,11 @@ const Company = () => {
                 <Button
                   onClick={() => {
                     setStep("info");
-                    setCompanyInfo({ name: "", industry: "", size: "", description: "" });
-                    setJobInfo({ title: "", description: "", requirements: "", salary: "", location: "", type: "" });
+                    setCompanyInfo({ name: "", nit: "", industry: "", size: "", description: "", city: "", email: "" });
+                    setJobInfo({ title: "", description: "", requirements: "", salary_min: "", salary_max: "", location: "", type: "", modalidad: "", cargo: "", experiencia_min: "", experiencia_max: "" });
                     setAiQuestions([]);
+                    setEmpresaId("");
+                    setVacanteId("");
                   }}
                   className="gradient-primary"
                 >
