@@ -8,8 +8,8 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 270 25% 98%;
-    --foreground: 270 20% 15%;
+    --background: 270 20% 12%;
+    --foreground: 270 15% 95%;
 
     --card: 0 0% 100%;
     --card-foreground: 270 20% 15%;
@@ -50,7 +50,7 @@ All colors MUST be HSL.
     /* Custom design tokens */
     --gradient-primary: linear-gradient(135deg, hsl(270 75% 70%), hsl(280 75% 75%));
     --gradient-secondary: linear-gradient(135deg, hsl(150 65% 65%), hsl(160 65% 70%));
-    --gradient-hero: linear-gradient(180deg, hsl(270 25% 98%), hsl(270 20% 96%));
+    --gradient-hero: linear-gradient(180deg, hsl(270 20% 12%), hsl(270 25% 15%));
     
     --shadow-sm: 0 2px 8px hsla(270 20% 15% / 0.08);
     --shadow-md: 0 4px 16px hsla(270 20% 15% / 0.12);
@@ -60,8 +60,8 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 270 25% 8%;
-    --foreground: 270 15% 95%;
+    --background: 270 25% 6%;
+    --foreground: 270 15% 96%;
 
     --card: 270 20% 12%;
     --card-foreground: 270 15% 95%;
@@ -99,7 +99,7 @@ All colors MUST be HSL.
 
     --gradient-primary: linear-gradient(135deg, hsl(270 70% 65%), hsl(280 70% 70%));
     --gradient-secondary: linear-gradient(135deg, hsl(150 60% 60%), hsl(160 60% 65%));
-    --gradient-hero: linear-gradient(180deg, hsl(270 25% 8%), hsl(270 25% 12%));
+    --gradient-hero: linear-gradient(180deg, hsl(270 25% 6%), hsl(270 25% 10%));
     
     --shadow-sm: 0 2px 8px hsla(0 0% 0% / 0.3);
     --shadow-md: 0 4px 16px hsla(0 0% 0% / 0.4);
